@@ -7,8 +7,14 @@ do
   if [ -d "$dir" ]
   then
     cd $dir
-    gmx_mpi trjcat -cat -f frame*-prot.xtc -o clone$j.xtc &> clone$j.log 
-    echo "Created clone$j.xtc"
+    file=clone$j.xtc
+    if [ ! -f $file ]
+    then 
+        gmx_mpi trjcat -cat -f frame*-prot.xtc -o $file &> clone$j.log 
+        echo "Created $file"
+    else
+        echo "$file already exists"
+    fi
     cd ../
   fi
 done

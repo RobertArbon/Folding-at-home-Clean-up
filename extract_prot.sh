@@ -13,10 +13,11 @@ do
      do 
          printf -v l "%03d" $k
          file=frame$l.xtc
-         if [ -f "$file" ] 
+         file2=frame$l-prot.xtc
+         if [ -f "$file" ] && [ ! -f $file2 ]
          then
              echo $file
-             gmx_mpi trjconv -f $file -s ../top.pdb -o frame$l-prot.xtc < ../groups.txt &> $l.log
+             gmx_mpi trjconv -f $file -s ../top.pdb -o $file2 < ../groups.txt &> $l.log
          fi
      done
      cd ../
