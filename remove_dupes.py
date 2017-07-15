@@ -1,4 +1,5 @@
 import mdtraj as md
+import numpy as np
 import sys
 from os.path import join
 
@@ -7,24 +8,46 @@ if len(sys.argv) != 2:
 
 dir_name = sys.argv[1]
 
-traj = md.load(join(dir_name.upper(), '{}.xtc'.format(dir_name.lower())), top='top.pdb')
+traj = md.load(join(dir_name.upper(), '{}.xtc'.format(dir_name.lower())), top='top_prot.pdb')
 
-dupes = []
-for i in range(traj.n_frames-1):
-    t0 = traj.time[i]
-    t1 = traj.time[i+1]
-    if (abs(t0-t1) < 1e-6) or (t1 < t0):
-        dupes.append(i)
+keep = list(range(traj.n_frames))
+duplicates = []
 
-keep = [x for x in range(traj.n_frames) if x not in dupes]
+# Remove all the duplicate frames that aren't the start of each frame
+idx = traj.n_frames-1
+jdx = 1
+ts = traj.time
+while jdx >= 0: 
+    if ts[idx] != 0:
+        jdx = idx-1
+        while ts[jdx] >= ts[idx]:
+            keep.remove(jdx)
+            duplicates.append(jdx)
+            jdx -= 1
+        idx = jdx
+    idx -=1
+
+
+# No remove all frames with timestamp zero, except the first one: 
+zeros = np.where(traj.time==0.)[0][1:]
+keep = [x for x in keep if x not in zeros]
+
 traj2 = traj[keep]
-print('\toriginal length: {}'.format(traj.n_frames))
-print('\tnum duplicates:  {}'.format(len(dupes)))
-print('\tnew length:      {}'.format(traj2.n_frames))
-if traj.n_frames == (len(dupes) + traj2.n_frames):
+
+print('\toriginal length: {:>8}'.format(traj.n_frames))
+print('\tnum duplicates:  {:>8}'.format(len(duplicates)))
+print('\tnum zeros:       {:>8}'.format(len(zeros)))
+print('\tnew length:      {:>8}'.format(traj2.n_frames))
+
+# Print out length in ns 
+dt = np.round(traj2.timestep)/1000.
+print('\tnew length (ns):  {:>8.2f}'.format(dt*traj2.n_frames))
+
+# Save trajectory
+if traj.n_frames == (len(duplicates) + traj2.n_frames+len(zeros)):
     traj2.save(join(dir_name.upper(), '{}-clean.xtc'.format(dir_name.lower())))
-    sys.exit(1)
+    sys.exit(0)
 else:
     print('Error!')
-
+    sys.exit(1)
 

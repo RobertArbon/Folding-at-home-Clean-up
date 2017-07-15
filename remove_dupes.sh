@@ -1,13 +1,12 @@
 #!/bin/bash
 
-for i in $(seq 0 45)
+for i in $(seq 0 99)
 do
   printf -v j "%03d" $i
-  dir1=CLONE$j
-  file1=clone$j.xtc
-  if [ -d "$dir1" ]
+  dir=CLONE$j
+  if [ -d "$dir" ]
   then
-   echo "Cleaning $dir1.xtc"
-   python remove_dupes.py $dir1  
+   echo "Cleaning $dir.xtc"
+   python remove_dupes.py $dir  
   fi
 done
